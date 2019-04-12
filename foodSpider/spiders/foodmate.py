@@ -3,14 +3,14 @@
 import scrapy
 import re
 import os,time
-from upload import *
+# from upload import *
 from ..items import *
 import json
 
 filePath = './PDF/'
 serverFilePath = "/root/food_safety/foodmate/pdf/"
 
-up = UPLOAD('sql');
+# up = UPLOAD('sql');
 g_found_standard_count = 0;
 
 g_standardInfo = {};
@@ -30,7 +30,7 @@ class FoodSpider(scrapy.Spider):
             'http://down.foodmate.net/standard/index.html',
         ]
 
-        print "Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+        print ("Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
@@ -97,7 +97,7 @@ class FoodSpider(scrapy.Spider):
         page_num = int(re.sub('\D', '', t.split('/')[1]));  #获取总页数
         g_standardInfo['sum'] = g_standardInfo['sum'] + item_num;
 
-        print info_p['subclass'],'  ', t, '标准总条数:', g_standardInfo['sum'];
+        print (info_p['subclass'],'  ', t, '标准总条数:', g_standardInfo['sum']);
         #print (item_num, page_num);
         for i in range(1, page_num + 1):
             page_index = response.url + 'index-' + str(i) + '.html';
@@ -106,7 +106,7 @@ class FoodSpider(scrapy.Spider):
             info['major'] = info_p['major'];       #大类
             info['subclass'] = info_p['subclass']; #小类
             request = response.follow(page_index, callback=self.parse_standard_subclass);
-            request.meta['info']=info; 
+            request.meta['info']=info;
             yield request;
 
 
@@ -176,10 +176,10 @@ class FoodSpider(scrapy.Spider):
 
         s_type_table = response.xpath('//table[@class="xztable" and @cellpadding="5"]');
         info['type'] = s_type_table.xpath('./tr[1]/td[1]/text()').extract_first();  #标准类别
-        info['publish'] = s_type_table.xpath('./tr[1]/td[2]/text()').extract_first();  
-        info['implement'] = s_type_table.xpath('./tr[2]/td[2]/text()').extract_first();  
-        info['department'] = s_type_table.xpath('./tr[3]/td[1]/text()').extract_first();  
-        info['abolish'] = s_type_table.xpath('./tr[3]/td[2]/text()').extract_first();  
+        info['publish'] = s_type_table.xpath('./tr[1]/td[2]/text()').extract_first();
+        info['implement'] = s_type_table.xpath('./tr[2]/td[2]/text()').extract_first();
+        info['department'] = s_type_table.xpath('./tr[3]/td[1]/text()').extract_first();
+        info['abolish'] = s_type_table.xpath('./tr[3]/td[2]/text()').extract_first();
 
         #print info['type'];
         #print 'status:  ',info['status'];
@@ -204,9 +204,9 @@ class FoodSpider(scrapy.Spider):
             #yield request;
         g_found_standard_count = g_found_standard_count + 1;
         if (g_found_standard_count % 100 == 0):
-            print '[',time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),']','found_count:', g_found_standard_count, 'can_down:', g_standardInfo['down'],'现行有效:',g_standardInfo['xxyx'],\
+            print ('[',time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),']','found_count:', g_found_standard_count, 'can_down:', g_standardInfo['down'],'现行有效:',g_standardInfo['xxyx'],\
             '即将废止:',g_standardInfo['jjfz'],'即将实施:',g_standardInfo['jjss'],'未知:',g_standardInfo['wz'],'已经废止:',g_standardInfo['yjfz'],'SUM:', \
-            g_standardInfo['xxyx']+g_standardInfo['jjfz']+g_standardInfo['jjss']+g_standardInfo['wz']+g_standardInfo['yjfz'];
+            g_standardInfo['xxyx']+g_standardInfo['jjfz']+g_standardInfo['jjss']+g_standardInfo['wz']+g_standardInfo['yjfz']);
 
 
     def parse_standard_donwload(self, response):
@@ -225,12 +225,4 @@ class FoodSpider(scrapy.Spider):
 
 
         #上传数据 todo
-        #up.upload(info);  
-
-
-
-
-
-
-
-
+        #up.upload(info);
