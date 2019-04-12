@@ -4,11 +4,19 @@ import json
 import paramiko
 import os
 
+'''
 HOST_IP = '106.12.74.85'
 HPST_PORT = 3306
 USER = 'spider'
 PASSWD = 'spider'
 DATABASE = 'spider'
+'''
+
+HOST_IP = '127.0.0.1'
+HPST_PORT = 3306
+USER = 'root'
+PASSWD = 'mxs2013!'
+DATABASE = 'food'
 
 upload_count = 0;
 
@@ -20,7 +28,7 @@ class UPLOAD(object):
     def upload_test(self, data):
     	print("upload: %s" %data);
     	try:
-    		conn = pymysql.connect(host=HOST_IP, port=HPST_PORT, user='spider', passwd='spider', db='spider');
+    		conn = pymysql.connect(host = HOST_IP, port = HPST_PORT, user = 'spider', passwd = 'spider', db = 'spider');
     		cursor = conn.cursor()    #获取cursor游标
     		sql = 'select * from food_safety_type;'
     		cursor.execute(sql);
@@ -68,6 +76,10 @@ class UPLOAD(object):
     		pass;
 
     def update(self, info):
+    	pass;
+
+    #上传【中国食品安全网】的数据
+    def upload_cfsn(self, info):
     	pass;
 
 

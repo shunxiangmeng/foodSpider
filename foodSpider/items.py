@@ -14,3 +14,29 @@ class FileDownloadItem(scrapy.Item):
     file_urls = scrapy.Field();
     files = scrapy.Field();
     pass
+
+
+#中国食品安全网信息
+class FoodCfsnItem(scrapy.Item):
+
+    #新闻分类
+    major = scrapy.Field();
+
+    #发布日期事件
+    publish = scrapy.Field();
+
+    #更新日期时间
+    update = scrapy.Field();
+    
+    #标题
+    title = scrapy.Field();
+
+    #来源
+    source = scrapy.Field();
+
+    #内容长度
+    content_len = scrapy.Field();
+
+    #内容
+    content = scrapy.Field();
+

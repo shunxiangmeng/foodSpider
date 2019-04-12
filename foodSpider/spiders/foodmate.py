@@ -2,24 +2,17 @@
 
 import scrapy
 import re
-<<<<<<< HEAD
 import os,time,sys
 #from upload import *
-=======
 import os,time
-# from upload import *
->>>>>>> e2f8a179bbbcccc4807682cc2d3eb6eb80e9f9f8
 from ..items import *
 import json
 
 filePath = './PDF/'
 serverFilePath = "/root/food_safety/foodmate/pdf/"
 
-<<<<<<< HEAD
 #up = UPLOAD('sql');
-=======
-# up = UPLOAD('sql');
->>>>>>> e2f8a179bbbcccc4807682cc2d3eb6eb80e9f9f8
+
 g_found_standard_count = 0;
 
 g_standardInfo = {};
@@ -39,11 +32,7 @@ class FoodSpider(scrapy.Spider):
             'http://down.foodmate.net/standard/index.html',
         ]
 
-<<<<<<< HEAD
         print ("Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())));
-=======
-        print ("Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
->>>>>>> e2f8a179bbbcccc4807682cc2d3eb6eb80e9f9f8
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 

@@ -14,6 +14,10 @@ BOT_NAME = 'foodSpider'
 SPIDER_MODULES = ['foodSpider.spiders']
 NEWSPIDER_MODULE = 'foodSpider.spiders'
 
+MYSQL_HOST = 'localhost'
+MYSQL_DBNAME = 'food'
+MYSQL_USER = 'root'
+MYSQL_PASSWORD = 'mxs2013!'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'foodSpider (+http://www.yourdomain.com)'
@@ -65,8 +69,8 @@ CONCURRENT_REQUESTS = 32
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'foodSpider.pipelines.FoodspiderPipeline': 1,
-    'scrapy.pipelines.files.FilesPipeline':None,
+    'foodSpider.pipelines.FoodCfsnPipeline': 1,
+   # 'scrapy.pipelines.files.FilesPipeline':None,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
