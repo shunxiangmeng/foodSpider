@@ -3,21 +3,21 @@
 import scrapy
 import re
 import os,time
-from upload import *
+#from upload import *
 from ..items import *
-import json
-
-major_list = [u'饮品'];
 
 
 class FoodSpider(scrapy.Spider):
     name = "foodcfsn"
 
+    def __init__(self):
+    	self.major_list = [u'饮品'];
+
     def start_requests(self):
     	urls = [
     		'http://www.cfsn.cn',  #中国食品安全网
     	]
-    	print "Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    	print ("Start Time: (%s)" %time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())));
     	for url in urls:
         	yield scrapy.Request(url=url, callback=self.parse)
 
@@ -29,7 +29,7 @@ class FoodSpider(scrapy.Spider):
         	text = selector.xpath("string()").extract_first();
         	link = selector.xpath("./a/@href").extract_first();
         	#print text,link
-        	for major in major_list:
+        	for major in self.major_list:
         		if (text == major):
 	        		info = {}                #创建信息参数
 	        		info['major'] = text;
@@ -70,14 +70,14 @@ class FoodSpider(scrapy.Spider):
     	div_selectors = response.xpath("//div[@class='fl w655 newShow']");
     	head_text = div_selectors.xpath('./h2[@class="title"]/text()').extract_first();
     	#head_text = head.xpath('text()').extract_first();
-    	print head_text;
+    	print (head_text);
     	date = div_selectors.xpath('./div[@class="msg"]/div/text()').extract_first();       #时间
     	come = div_selectors.xpath('./div[@class="msg"]/div/span/text()').extract_first();  #源自
-    	print date,come
+    	print (date,come);
     	content = div_selectors.xpath('./div[@class="content"]/p');
     	content_text = content.xpath('string()').extract_first();
-    	print content_text;
-    	print "------------------------------\r\n"
+    	print (content_text);
+    	print ("------------------------------\r\n");
 
 
 
