@@ -17,7 +17,7 @@ NEWSPIDER_MODULE = 'foodSpider.spiders'
 MYSQL_HOST = 'localhost'
 MYSQL_DBNAME = 'food'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'mxs2013!'
+MYSQL_PASSWORD = '123456'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'foodSpider (+http://www.yourdomain.com)'
