@@ -14,10 +14,17 @@ BOT_NAME = 'foodSpider'
 SPIDER_MODULES = ['foodSpider.spiders']
 NEWSPIDER_MODULE = 'foodSpider.spiders'
 
+'''
 MYSQL_HOST = 'localhost'
 MYSQL_DBNAME = 'food'
 MYSQL_USER = 'root'
 MYSQL_PASSWORD = '123456'
+'''
+
+MYSQL_HOST = '106.00.00.00'
+MYSQL_DBNAME = 'spider'
+MYSQL_USER = 'spider'
+MYSQL_PASSWORD = '000000'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'foodSpider (+http://www.yourdomain.com)'
@@ -69,7 +76,7 @@ CONCURRENT_REQUESTS = 32
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'foodSpider.pipelines.FoodCfsnPipeline': 1,
+    'foodSpider.pipelines.FoodCfsnPipeline': 100,
    # 'scrapy.pipelines.files.FilesPipeline':None,
 }
 

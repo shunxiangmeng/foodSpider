@@ -40,3 +40,6 @@ class FoodCfsnItem(scrapy.Item):
     #内容
     content = scrapy.Field();
 
+    #新闻链接
+    url = scrapy.Field();
+

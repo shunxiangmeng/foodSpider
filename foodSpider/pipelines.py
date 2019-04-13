@@ -18,8 +18,6 @@ class FoodspiderPipeline(object):
 
 
 
-
-
 class FoodCfsnPipeline(object):
     def __init__(self, dbpool):
         self.dbpool = dbpool;
@@ -52,14 +50,14 @@ class FoodCfsnPipeline(object):
     	ndt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S");  #当前时间
     	try:
     		insert_sql = """
-    		insert into food_safety_foodcfsn(major, title, publish, update_time, source, content_len, content) VALUES(%s, %s, %s, %s, %s, %s, %s)
+    		insert into food_safety_cfsn(major, title, status, publish_time, update_time, source, content_len, content, url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
     				"""
-    		cursor.execute(insert_sql, (item['major'], item['title'], item['publish'], ndt, item['source'], item['content_len'], item['content']));
+    		cursor.execute(insert_sql, (item['major'], item['title'], "最新", item['publish'], ndt, item['source'], item['content_len'], item['content'], item['url']));
     	except pymysql.Error as e:
     		#print ("except", e);
     		if (e.args[0] == 1062):   #已有数据，则更新
-    			update_sql = "update food_safety_foodcfsn set source='%s', content='%s', content_len='%d', major='%s', publish='%s', update_time='%s'\
-    			where title='%s'" %(item['source'], item['content'], item['content_len'], item['major'], item['publish'], ndt, item['title']);
+    			update_sql = "update food_safety_cfsn set source='%s', content_len='%d', major='%s', publish_time='%s', update_time='%s', status='更新', url='%s'\
+    			where title='%s'" %(item['source'], item['content_len'], item['major'], item['publish'], ndt, item['url'], item['title']);
 
     			#print(update_sql);
     			cursor.execute(update_sql);
@@ -68,6 +66,7 @@ class FoodCfsnPipeline(object):
     def handle_error(self, failure):
     	if failure:
     		# 打印错误信息
+    		print("handle_error............");
     		print(failure);
 
 
