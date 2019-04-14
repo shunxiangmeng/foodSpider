@@ -10,36 +10,31 @@ import scrapy
 
 class FileDownloadItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
     file_urls = scrapy.Field();
     files = scrapy.Field();
-    pass
 
 
 #中国食品安全网信息
 class FoodCfsnItem(scrapy.Item):
-
     #新闻分类
     major = scrapy.Field();
-
     #发布日期事件
     publish = scrapy.Field();
-
     #更新日期时间
     update = scrapy.Field();
-    
     #标题
     title = scrapy.Field();
-
     #来源
     source = scrapy.Field();
-
     #内容长度
     content_len = scrapy.Field();
-
     #内容
     content = scrapy.Field();
-
     #新闻链接
     url = scrapy.Field();
+
+
+class FoodScnItem(scrapy.Item):
+    #新闻分类
+    major = scrapy.Field();
 

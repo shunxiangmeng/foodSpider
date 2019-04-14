@@ -5,8 +5,18 @@ import os,time
 from .upload import *
 from ..items import *
 
+header = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Upgrade-Insecure-Requests": "1",
+    "Host": "www.cfsn.cn",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.3 Safari/605.1.15",
+    "Accept-Language": "zh-cn",
+    #'Accept-Encoding: gzip, deflate',
+    "Connection": "keep-alive"
+};
+
 class FoodSpider(scrapy.Spider):
-    name = "foodcfsn"
+    name = "foodcfsn";
 
 
     def __init__(self):
@@ -24,7 +34,7 @@ class FoodSpider(scrapy.Spider):
         ]
         print ("Start Time: (%s)" %time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())));
         for url in urls:
-            yield scrapy.Request(url = url, callback = self.parse)
+            yield scrapy.Request(url = url, callback = self.parse, headers = header);
 
     def parse(self, response):
         print("....【中国食品安全网】... " + response.url);
@@ -64,7 +74,7 @@ class FoodSpider(scrapy.Spider):
             link = selector.xpath("@href").extract_first();
             request = response.follow(link, callback = self.parse_and_upload);
             request.meta['info']=info;    #传递参数
-            yield request;
+            #yield request;
         
 
         #遍历页码, 通过查找”尾页“来确定共有多少页
@@ -81,7 +91,7 @@ class FoodSpider(scrapy.Spider):
             link = response.url + "&page=" + str(page);    #拼接成url
             request = response.follow(link, callback = self.parse_page_news);
             request.meta['info'] = info; 
-            yield request;
+            #yield request;
 
 
     def parse_page_news(self, response):
@@ -103,14 +113,10 @@ class FoodSpider(scrapy.Spider):
         div_selectors = response.xpath("//div[@class='fl w655 newShow']");
         head_text = div_selectors.xpath('./h2[@class="title"]/text()').extract_first();
         #head_text = head.xpath('text()').extract_first();
-        print (head_text);
         date = div_selectors.xpath('./div[@class="msg"]/div/text()').extract_first();       #时间
         come = div_selectors.xpath('./div[@class="msg"]/div/span/text()').extract_first();  #源自
-        print (date,come);
         content = div_selectors.xpath('./div[@class="content"]/p');
         content_text = content.xpath('string()').extract_first();
-        print (content_text);
-        print ("------------------------------\r\n");
 
 
     def parse_and_upload(self, response):    
@@ -148,7 +154,4 @@ class FoodSpider(scrapy.Spider):
         print ("[%s] count %d" %(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), self.newsCount));
 
         yield item;
-
-
-
 

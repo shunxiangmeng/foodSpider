@@ -39,20 +39,26 @@ class FoodCfsnPipeline(object):
     	# 返回实例化参数
     	return cls(dbpool);
 
-    def process_item(self,item,spider):
+    def process_item(self, item, spider):
+    	#print ('spider.name: ', spider.name);
     	# 使用twisted将MySQL插入变成异步执行。通过连接池执行具体的sql操作，返回一个对象
-    	query = self.dbpool.runInteraction(self.do_insert, item);
+    	if (spider.name == "foodcfsn"):
+    		query = self.dbpool.runInteraction(self.do_insert_cfsn, item);
+    	if (spider.name == "foodscn"):
+    		query = self.dbpool.runInteraction(self.do_insert_scn, item);
+
     	# 添加异常处理
     	query.addCallback(self.handle_error);
 
-    def do_insert(self, cursor, item):
+    #
+    def do_insert_cfsn(self, cursor, item):
     	# 对数据库进行插入操作，并不需要commit，twisted会自动commit
     	ndt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S");  #当前时间
     	try:
     		insert_sql = """
     		insert into food_safety_cfsn(major, title, status, publish_time, update_time, source, content_len, content, url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
     				"""
-    		cursor.execute(insert_sql, (item['major'], item['title'], "最新", item['publish'], ndt, item['source'], item['content_len'], item['content'], item['url']));
+    		cursor.execute(insert_sql, (item['major'], item['title'], "新增", item['publish'], ndt, item['source'], item['content_len'], item['content'], item['url']));
     	except pymysql.Error as e:
     		#print ("except", e);
     		if (e.args[0] == 1062):   #已有数据，则更新
@@ -61,7 +67,25 @@ class FoodCfsnPipeline(object):
 
     			#print(update_sql);
     			cursor.execute(update_sql);
-    	#return item;
+    	#return 0;
+
+    #中国安全食品网 数据表插入
+    def do_insert_scn(self, cursor, item):
+    	ndt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S");  #当前时间
+    	try:
+    		insert_sql = """
+    		insert into food_safety_scn(major, title, status, publish_time, update_time, source, content_len, content, url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    				"""
+    		cursor.execute(insert_sql, (item['major'], item['title'], "新增", item['publish'], ndt, item['source'], item['content_len'], item['content'], item['url']));
+    	except pymysql.Error as e:
+    		#print ("except", e);
+    		if (e.args[0] == 1062):   #已有数据，则更新
+    			update_sql = "update food_safety_scn set source='%s', content_len='%d', major='%s', publish_time='%s', update_time='%s', status='更新', url='%s'\
+    			where title='%s'" %(item['source'], item['content_len'], item['major'], item['publish'], ndt, item['url'], item['title']);
+
+    			#print(update_sql);
+    			cursor.execute(update_sql);
+    	return 0;
 
     def handle_error(self, failure):
     	if failure:
