@@ -74,7 +74,7 @@ class FoodSpider(scrapy.Spider):
             link = selector.xpath("@href").extract_first();
             request = response.follow(link, callback = self.parse_and_upload);
             request.meta['info']=info;    #传递参数
-            #yield request;
+            yield request;
         
 
         #遍历页码, 通过查找”尾页“来确定共有多少页
@@ -91,7 +91,7 @@ class FoodSpider(scrapy.Spider):
             link = response.url + "&page=" + str(page);    #拼接成url
             request = response.follow(link, callback = self.parse_page_news);
             request.meta['info'] = info; 
-            #yield request;
+            yield request;
 
 
     def parse_page_news(self, response):

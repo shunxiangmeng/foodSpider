@@ -2,9 +2,10 @@
 
 import scrapy
 import os,time
-from .upload import *
+import re
 from ..items import *
 
+SEARCH_PAGE_MAX = 10;  #增量更新，只查前10页的内容
 
 header = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -53,20 +54,28 @@ class FoodScnSpider(scrapy.Spider):
             ['renwu',    u'人物'],
             ['weichuanbo',u'微传播'],
             ['guoji',    u'国际'],
+            ['shiping'   u'食评'],
         ];
 
     def start_requests(self):
+       	"""
+        url = 'http://www.foodscn.cn/news/2016/03/28/145912891385.htm';
+        request = scrapy.Request(url = url, callback = self.parse_news_details);
+        request.meta['major'] = 'test';
+        yield request;
+        """
+
         for url in self.urls_names:
             link = 'http://www.foodscn.cn/news/' + url[0] + '/';
-            print (link);
+            #print (link);
             yield scrapy.Request(url = link, callback = self.parse);
+        
 
 
     def parse(self, response):
         print("....【中国安全食品网】... " + response.url);
         link = response.url + 'newslist.php?p=2';   #点第二页来找尾页
         yield scrapy.Request(url = link, callback = self.parse_found_last_lage);
-
         '''
         a_selectors = response.xpath("//div[@id='pages']/a[@href]");
         print (a_selectors);
@@ -78,6 +87,7 @@ class FoodScnSpider(scrapy.Spider):
                 print (link);
         '''
 
+
     def parse_found_last_lage(self, response):
         print ('parse_found_last_lage ' + response.url);
         a_selectors = response.xpath("//div[@id='pages']/a[@href]");
@@ -85,18 +95,21 @@ class FoodScnSpider(scrapy.Spider):
             text = selector.xpath("string()").extract_first();
             if (text == u'最未页'):     #是 中国安全食品网 的程序员写错的 “最未页”
                 link = selector.xpath("@href").extract_first();
-                page_num_max = link.split('=')[-1];
+                page_num_max = int(link.split('=')[-1]);
+                #数据更新，太老的数据不用重复爬取
+                if (page_num_max >= SEARCH_PAGE_MAX):
+                	page_num_max = SEARCH_PAGE_MAX;
                 print ("page_num_max:", page_num_max);
-
-                for page in range(1, int(page_num_max) + 1):
-                #for page in range(1, int(2) + 1):
+                for page in range(1, page_num_max + 1):
+                #for page in range(1, int(1) + 1):
                     url = response.url.split('=')[0] + '=' + str(page);
-                    print ('url: ' + url);
+                    #print ('url: ' + url);
                     request = response.follow(url, callback = self.parse_get_news_title, dont_filter = True);
                     yield request;
 
+
     def parse_get_news_title(self, response):
-        print('parse_get_news_details -------> ' + response.url);
+        #print('parse_get_news_details -------> ' + response.url);
         a_selectors = response.xpath("//div[@id='ncontent-left']//div[@class='newslist-title']/a");
         #print ('a_selectors:', a_selectors);
         for selector in a_selectors:
@@ -108,6 +121,7 @@ class FoodScnSpider(scrapy.Spider):
             request.meta['major'] = response.url.split('/')[-2];    #获取新闻分类
             yield request;
 
+
     #获取新闻详细信息,并保存数据
     def parse_news_details(self, response):
         #print('parse_news_details: ' + response.url);
@@ -116,10 +130,33 @@ class FoodScnSpider(scrapy.Spider):
         title = div_selectors.xpath('.//div[@id="newstitle"]/text()').extract_first(); 
         newsinfo = div_selectors.xpath('.//div[@id="newsinfo"]/text()').extract_first(); 
         #print (newsinfo.split(" ")); 
-        date = newsinfo.split(" ")[0].split("：")[-1] + " " + newsinfo.split(" ")[1];
-        source = newsinfo.split(" ")[2].split("：")[-1];
+
+        #date = newsinfo.split(" ")[0].split("：")[-1] + " " + newsinfo.split(" ")[1];
+        #source = newsinfo.split(" ")[2].split("：")[-1];
+
+        searchObj = re.search( r'(\d\d\d\d-.*-.*:.*:\d\d).*', newsinfo, re.M);
+        if (searchObj):
+            date = searchObj.group(1);
+        else:
+        	date = "";
+
+        searchObj = re.search( r'(来源：.*)', newsinfo, re.M);
+        if (searchObj):
+            source = searchObj.group(1)[4:];
+        else:
+        	source = "";
+
+        
         content_text = "";
-        contents = div_selectors.xpath('.//div[@id="newscontent"]//p');   #正文取所有段落
+        contents = div_selectors.xpath('.//div[@id="newscontent"]').xpath("string()").extract_first();   #正文
+        #print(contents);
+        content_text = contents.split('分享到')[0].replace('\r\n\r\n', '\r\n');
+
+        #content_text = div_selectors.xpath('.//div[@id="newscontent"]').xpath("string()").extract();   #正文取所有段落
+        #print (content_text)
+
+
+        '''
         if (contents == []):  #有一些正文没有p标签，只能选去全部文字
             #print ("contents is null");
             content_texts = div_selectors.xpath('.//div[@id="newscontent"]/text()').extract(); 
@@ -130,6 +167,7 @@ class FoodScnSpider(scrapy.Spider):
             for content in contents:
                 content_text += content.xpath('string()').extract_first(); 
                 #print (content.xpath('text()').extract_first())
+        '''
 
         #查找新闻分类字符名字
         major = '';
@@ -148,27 +186,19 @@ class FoodScnSpider(scrapy.Spider):
         item['content_len'] = len(content_text);  #内容长度
         item['url'] = response.url;
 
-        '''
+        """
         print ('major:', item['major']);
         print ('title:', item['title']);
         print ('source:', item['source']);
         print ('publish:', item['publish']);
         print ('content_len:', item['content_len']);
-        #print ('content:', item['content']);
+        print ('content:', item['content']);
         print ('url:', item['url']);
-        '''
-
+        """
+        
         self.newsCount = self.newsCount + 1;
         print ("[%s] count %d" %(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), self.newsCount));
 
         yield item;
-
-
-
-
-
-
-
-
 
 
