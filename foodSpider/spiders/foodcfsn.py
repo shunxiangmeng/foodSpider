@@ -68,11 +68,11 @@ class FoodSpider(scrapy.Spider):
             ['&tjid=4&lmid=4', u'市场监管局-专题活动'],
             ['&tjid=4&lmid=5', u'市场监管局-媒体聚焦'],
 
-            ['&tjid=5&lmid=1', u'农业弄村厅-新闻动态'],
-            ['&tjid=5&lmid=2', u'农业弄村厅-通知公告'],
-            ['&tjid=5&lmid=3', u'农业弄村厅-政策法规'],
-            ['&tjid=5&lmid=4', u'农业弄村厅-专题活动'],
-            ['&tjid=5&lmid=5', u'农业弄村厅-媒体聚焦'],
+            ['&tjid=5&lmid=1', u'农业农村厅-新闻动态'],
+            ['&tjid=5&lmid=2', u'农业农村厅-通知公告'],
+            ['&tjid=5&lmid=3', u'农业农村厅-政策法规'],
+            ['&tjid=5&lmid=4', u'农业农村厅-专题活动'],
+            ['&tjid=5&lmid=5', u'农业农村厅-媒体聚焦'],
 
             ['&tjid=6&lmid=1', u'卫健委-新闻动态'],
             ['&tjid=6&lmid=2', u'卫健委-通知公告'],
@@ -101,7 +101,7 @@ class FoodSpider(scrapy.Spider):
         for url in urls:
             yield scrapy.Request(url = url, callback = self.parse, headers = header);
 
-        #省份新闻:市场监管局,农业弄村厅,卫健委
+        #省份新闻:市场监管局,农业农村厅,卫健委
         for pro_num in self.province_list:
             url_base =  self.province_url_base_tjbw + pro_num[0];
             for sub_url in self.sub_list_tjbw:
@@ -109,6 +109,10 @@ class FoodSpider(scrapy.Spider):
                 print (url);
                 info = {};
                 info['major'] = pro_num[1] + '-' + sub_url[1];
+                #深圳的农业农村厅是海关
+                if (pro_num == '32'):
+                    if (sub_url[1].split('-')[0] == u'农业农村厅'):
+                        info['major'] = pro_num[1] + '-' + u' 海关' + '-' + sub_url[1].split('-')[1];
                 request = scrapy.Request(url = url, callback = self.parse_province_get_page_num, headers = header);
                 request.meta['info']=info;    #传递参数
                 yield request;
@@ -272,3 +276,4 @@ class FoodSpider(scrapy.Spider):
             request = response.follow(link, callback = self.parse_get_news_and_upload);
             request.meta['info'] = info; 
             yield request;
+
