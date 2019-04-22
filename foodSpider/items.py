@@ -18,7 +18,7 @@ class FileDownloadItem(scrapy.Item):
 class FoodCfsnItem(scrapy.Item):
     #新闻分类
     major = scrapy.Field();
-    #发布日期事件
+    #发布新闻日期
     publish = scrapy.Field();
     #更新日期时间
     update = scrapy.Field();
@@ -32,9 +32,10 @@ class FoodCfsnItem(scrapy.Item):
     content = scrapy.Field();
     #新闻链接
     url = scrapy.Field();
+    #照片数量
+    pic_num = scrapy.Field();
+    #照片src
+    pic_url = scrapy.Field();
 
 
-class FoodScnItem(scrapy.Item):
-    #新闻分类
-    major = scrapy.Field();
 

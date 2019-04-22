@@ -40,6 +40,7 @@ class FoodScnSpider(scrapy.Spider):
             #'http://www.foodscn.cn/news/guoji/',      #国际
         ];
         self.newsCount = 0;    #抓到的新闻条数
+        self.picsCount = 0;    #下载的照片数量
         self.urls_names = [
             ['news',     u'要闻'],
             ['jujiao',   u'聚焦'],
@@ -59,7 +60,7 @@ class FoodScnSpider(scrapy.Spider):
 
     def start_requests(self):
        	"""
-        url = 'http://www.foodscn.cn/news/2016/03/28/145912891385.htm';
+        url = 'http://www.foodscn.cn/news/2019/04/12/155503878526.htm';
         request = scrapy.Request(url = url, callback = self.parse_news_details);
         request.meta['major'] = 'test';
         yield request;
@@ -69,23 +70,13 @@ class FoodScnSpider(scrapy.Spider):
             link = 'http://www.foodscn.cn/news/' + url[0] + '/';
             #print (link);
             yield scrapy.Request(url = link, callback = self.parse);
+        #"""
         
-
 
     def parse(self, response):
         print("....【中国安全食品网】... " + response.url);
         link = response.url + 'newslist.php?p=2';   #点第二页来找尾页
         yield scrapy.Request(url = link, callback = self.parse_found_last_lage);
-        '''
-        a_selectors = response.xpath("//div[@id='pages']/a[@href]");
-        print (a_selectors);
-        for selector in a_selectors:
-            text = selector.xpath("string()").extract_first();
-            print (text);
-            if (text == '2'):
-                link = selector.xpath("@href").extract_first();
-                print (link);
-        '''
 
 
     def parse_found_last_lage(self, response):
@@ -101,7 +92,6 @@ class FoodScnSpider(scrapy.Spider):
                 	page_num_max = SEARCH_PAGE_MAX;
                 print ("page_num_max:", page_num_max);
                 for page in range(1, page_num_max + 1):
-                #for page in range(1, int(1) + 1):
                     url = response.url.split('=')[0] + '=' + str(page);
                     #print ('url: ' + url);
                     request = response.follow(url, callback = self.parse_get_news_title, dont_filter = True);
@@ -152,6 +142,18 @@ class FoodScnSpider(scrapy.Spider):
         #print(contents);
         content_text = contents.split('分享到')[0].replace('\r\n\r\n', '\r\n');
 
+        
+        """
+        content_text = response.xpath("//div[@id='newscontent']").extract()[0];
+        print(content_text);
+        pattern = re.compile(r'(<div .*>)|(</div>)|(<p .*>)|(</p>)|(<a .*>)|(</a>)|(<span .*/span>)|(<script .*>)|(document.*\r\n)|(</script>)');
+        print('pattern.findall: ', pattern.findall(content_text));
+        out = re.sub(pattern, "", content_text);
+        out = out.replace("\r\n\r\n\r\n", "\r\n");
+        out = out.replace("\r\n\r\n", "\r\n");
+        print('out: ', out);
+        """
+
         #content_text = div_selectors.xpath('.//div[@id="newscontent"]').xpath("string()").extract();   #正文取所有段落
         #print (content_text)
 
@@ -169,6 +171,8 @@ class FoodScnSpider(scrapy.Spider):
                 #print (content.xpath('text()').extract_first())
         '''
 
+        content_text = content_text.replace("\r\n\r\n", "\r\n");
+
         #查找新闻分类字符名字
         major = '';
         meta_major = response.meta['major'];
@@ -185,20 +189,49 @@ class FoodScnSpider(scrapy.Spider):
         item['content'] = content_text;
         item['content_len'] = len(content_text);  #内容长度
         item['url'] = response.url;
-
-        """
-        print ('major:', item['major']);
-        print ('title:', item['title']);
-        print ('source:', item['source']);
-        print ('publish:', item['publish']);
-        print ('content_len:', item['content_len']);
-        print ('content:', item['content']);
-        print ('url:', item['url']);
-        """
         
+        #查找图片链接，下载, 并上传
+        img_selectors = div_selectors.xpath('.//img[@src]');
+        item['pic_url'] = "";
+        img_count = 0;
+        for img_selector in img_selectors:
+            width = img_selector.xpath("@width").extract_first();  #过滤掉不显示的图片
+            if (width == "0"):
+                continue;
+            img_src = img_selector.xpath("@src").extract_first();
+            img_count += 1;
+            if (img_src[0:4] != "http"):                           #有些图片的url需要补齐
+                img_src = 'http://www.foodscn.cn' + img_src;
+                
+            #print("img_count:" + str(img_count) + " " + img_src);
+
+            #下载图片并上传
+            #request = response.follow(url = img_src, callback = self.parse_image);
+            #request.meta['title'] = title;
+            #item['pic_url'] += img_src + ";";
+            #yield request;
+
+        item['pic_num'] = img_count;
+        yield item;
         self.newsCount = self.newsCount + 1;
         print ("[%s] count %d" %(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), self.newsCount));
+        #print(item, "\r\n");
 
-        yield item;
 
+        #下载图片并上传
+    def parse_image(self, response):
+        filename = "./pic/" + response.url.split("/")[-1];
+        with open(filename, 'wb') as f:
+            f.write(response.body);
+
+        self.picsCount += 1;
+
+        print ("[%s] pictureCount %d" %(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), self.picsCount));
+
+        transport = paramiko.Transport(('106.12.**.**', 22))
+        transport.connect(username='root', password='*********')
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        sftp.put(item['fileName'], '/root/food_safety/pictures/' + item['fileName'].split('/')[-1]);
+        transport.close();
+        os.remove(item['fileName']);  #删除本地文件
 
