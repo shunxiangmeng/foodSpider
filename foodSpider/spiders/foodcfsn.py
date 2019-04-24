@@ -106,7 +106,7 @@ class FoodSpider(scrapy.Spider):
             url_base =  self.province_url_base_tjbw + pro_num[0];
             for sub_url in self.sub_list_tjbw:
                 url = url_base + sub_url[0];
-                print (url);
+                #print (url);
                 info = {};
                 info['major'] = pro_num[1] + '-' + sub_url[1];
                 #深圳的农业农村厅是海关
@@ -131,7 +131,7 @@ class FoodSpider(scrapy.Spider):
 
 
     def parse(self, response):
-        print("....【中国食品安全网】... " + response.url);
+        #print("....【中国食品安全网】... " + response.url);
         a_selectors = response.xpath("//div[@class='nav']/div[@class='wal']//li");
         a_selectors += response.xpath("//div[@class='wal subNav']//div[@class='list']//li");
         #print (a_selectors)
@@ -238,6 +238,21 @@ class FoodSpider(scrapy.Spider):
         item['content_len'] = len(content_text);  #内容长度
         item['url'] = response.url;
 
+        #查找图片链接，下载, 并上传
+        img_selectors = div_selectors.xpath('.//div[@class="content"]//img[@src]');
+        item['pic_url'] = "";
+        img_count = 0;
+        for img_selector in img_selectors:
+            width = img_selector.xpath("@width").extract_first();  #过滤掉不显示的图片
+            if (width == "0"):
+                continue;
+            img_src = img_selector.xpath("@src").extract_first();
+            img_count += 1;
+            if (img_src[0:4] != "http"):                           #有些图片的url需要补齐
+                img_src = 'http://www.cfsn.cn' + img_src;
+            item['pic_url'] += img_src + ";";
+
+        item['pic_num'] = img_count;
         #print (item);
         #print('major:', item['major']);
         #print('title:', item['title']);

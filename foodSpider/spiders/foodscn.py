@@ -208,7 +208,7 @@ class FoodScnSpider(scrapy.Spider):
             #下载图片并上传
             #request = response.follow(url = img_src, callback = self.parse_image);
             #request.meta['title'] = title;
-            #item['pic_url'] += img_src + ";";
+            item['pic_url'] += img_src + ";";
             #yield request;
 
         item['pic_num'] = img_count;
@@ -228,8 +228,8 @@ class FoodScnSpider(scrapy.Spider):
 
         print ("[%s] pictureCount %d" %(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), self.picsCount));
 
-        transport = paramiko.Transport(('106.12.**.**', 22))
-        transport.connect(username='root', password='*********')
+        transport = paramiko.Transport(('106.12.******', 22))
+        transport.connect(username='root', password='******')
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.put(item['fileName'], '/root/food_safety/pictures/' + item['fileName'].split('/')[-1]);
         transport.close();

@@ -3,10 +3,20 @@
 import scrapy
 import re
 import os,time,sys
-#from upload import *
+from .upload import *
 import os,time
 from ..items import *
 import json
+
+header = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Upgrade-Insecure-Requests": "1",
+    "Host": "www.cfsn.cn",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.3 Safari/605.1.15",
+    "Accept-Language": "zh-cn",
+    #'Accept-Encoding: gzip, deflate',
+    "Connection": "keep-alive"
+};
 
 filePath = './PDF/'
 serverFilePath = "/root/food_safety/foodmate/pdf/"
@@ -14,6 +24,7 @@ serverFilePath = "/root/food_safety/foodmate/pdf/"
 #up = UPLOAD('sql');
 
 g_found_standard_count = 0;
+g_download_upload_count = 0;
 
 g_standardInfo = {};
 g_standardInfo['xxyx'] = 0;
@@ -30,11 +41,11 @@ class FoodSpider(scrapy.Spider):
     def start_requests(self):
         urls = [
             'http://down.foodmate.net/standard/index.html',
-        ]
-
+        ];
         print ("Start Time: ", time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())));
         for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+            yield scrapy.Request(url = url, callback = self.parse);
+
 
     def parse(self, response):
         print("....查找【国内标准】和【国外标准】... " + response.url);
@@ -52,7 +63,6 @@ class FoodSpider(scrapy.Spider):
                 #print('url: ' + link +'\n');
                 info = {}                #创建信息参数
                 info['major'] = text;    #大类
-                #print json.dumps(info)
                 request = response.follow(link, callback=self.parse_standard_major);
                 request.meta['info']=info;    #传递参数
                 yield request;
@@ -79,7 +89,6 @@ class FoodSpider(scrapy.Spider):
                 if (text == standard):
                     #print(text);
                     #print(u'链接:' + link);
-
                     info = {}                           #创建信息参数
                     info['major'] = info_p['major'];    #大类
                     info['subclass'] = standard;        #小类
@@ -199,10 +208,28 @@ class FoodSpider(scrapy.Spider):
         if (downLink != None):
             info['download_url'] = downLink;
             g_standardInfo['down'] = g_standardInfo['down'] + 1;
+            request = response.follow(downLink, callback = self.parse_standard_donwload_and_upload);
+            request.meta['info']=info;    #传递参数
+            yield request;
 
-            #request = response.follow(downLink, callback=self.parse_standard_donwload);
-            #request.meta['info']=info;    #传递参数
-            #yield request;
+        item = FoodStandardItem();
+        item['major']         = info['major'];
+        item['standard_type'] = info['type'];
+        item['sub']           = info['subclass'];
+        item['title']         = info['head'];
+        item['describe']      = info['describe'];
+        item['standard_status'] = info['status'];
+        item['publish']       = info['publish'];
+        item['implement']     = info['implement'];
+        item['abolish']       = info['abolish'];
+        item['department']    = info['department'];
+        item['url']           = response.url;
+        item['download_url']  = info['download_url'];
+        item['fileName']      = info['head'].replace('/', '') + '.pdf';
+        if (item['download_url'] == 'null'):
+            item['fileName'] = u'暂无文本';
+        yield item;
+
         g_found_standard_count = g_found_standard_count + 1;
         if (g_found_standard_count % 100 == 0):
             print ('[',time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),']','found_count:', g_found_standard_count, 'can_down:', g_standardInfo['down'],'现行有效:',g_standardInfo['xxyx'],\
@@ -210,20 +237,28 @@ class FoodSpider(scrapy.Spider):
             g_standardInfo['xxyx']+g_standardInfo['jjfz']+g_standardInfo['jjss']+g_standardInfo['wz']+g_standardInfo['yjfz']);
 
 
-    def parse_standard_donwload(self, response):
-        global g_found_standard_count;
+    def parse_standard_donwload_and_upload(self, response):
+        global g_found_standard_count, g_download_upload_count;
         info = response.meta['info'];
-        #print json.dumps(info);
-        #filename = filePath + response.url.split('/')[-1];
         filename = filePath + info['head'].replace('/', '') + '.pdf';
         with open(filename, 'wb') as f:
             pass;
             f.write(response.body);
-        info['fileName'] = filename;
-        info['serverFileName'] = serverFilePath + info['head'].replace('/', '') + '.pdf';
         #print 'download: ' + info['major'] + '->' + info['subclass'] + '->' + info['head'] + ' to '+ filename;
         #print(response.url + "\r\n")
 
+        #上传数据
+        transport = paramiko.Transport(('106.12.**.***', 22));
+        transport.connect(username = '***', password = '*******');
+        sftp = paramiko.SFTPClient.from_transport(transport);
+        sftp.put(filename, serverFilePath + info['head'].split('/')[-1] + '.pdf');
+        transport.close();
+        os.remove(filename);  #删除本地文件
 
-        #上传数据 todo
-        #up.upload(info);
+        g_download_upload_count += 1;
+        print('[',time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),']download_upload_count: ',g_download_upload_count);
+
+
+
+
+
